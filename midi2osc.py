@@ -4,7 +4,7 @@ import sys
 import time
 import rtmidi
 from rtmidi.midiutil import open_midiinput
-from rtmidi.midiconstants import NOTE_ON, NOTE_OFF
+from rtmidi.midiconstants import NOTE_ON, NOTE_OFF, CONTROLLER_CHANGE
 
 import liblo
 
@@ -28,6 +28,18 @@ def midiin_callback(event, data=None):
             note,
             velocity
         )
+
+    if message[0] & 0xF0 == CONTROLLER_CHANGE:
+        status, cc, value = message
+        channel = (status & 0xF) + 1
+        liblo.send(
+            (args.host, args.port),
+            f"/midi/{channel}/cc",
+            cc,
+            value
+        )
+
+
 
 with open_midiinput(args.midi, client_name='noteon2osc')[0] as midiin:
     midiin.set_callback(midiin_callback)
